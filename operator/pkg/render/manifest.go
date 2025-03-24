@@ -44,6 +44,7 @@ func GenerateManifest(files []string, setFlags []string, force bool, client kube
 	// First, compute our final configuration input. This will be in the form of an IstioOperator, but as an unstructured values.Map.
 	// This allows safe access to get/fetch values dynamically, and avoids issues are typing and whether we should emit empty fields.
 	merged, err := MergeInputs(files, setFlags, client)
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("merge inputs: %v", err)
 	}
@@ -286,9 +287,10 @@ func MergeInputs(filenames []string, flags []string, client kube.Client) (values
 		if m["spec"] == nil {
 			delete(m, "spec")
 		}
-		userConfigBase.MergeFrom(m)
+		userConfigBase = userConfigBase.MergeFromStrategic(m)
 	}
 
+	return userConfigBase, nil
 	// Apply any --set flags
 	if err := userConfigBase.SetSpecPaths(flags...); err != nil {
 		return nil, err
